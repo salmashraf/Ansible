@@ -1,0 +1,3 @@
+[web]
+machine-1 ansible_host=34.205.65.221  ansible_user=ubuntu ansible_ssh_private_key_file=./ansible-key.pem ansible_connection=ssh
+machine-2 ansible_host=52.3.240.100   ansible_user=ubuntu ansible_ssh_private_key_file=./ansible-key.pem ansible_connection=ssh
