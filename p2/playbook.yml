@@ -1,0 +1,36 @@
+- name: lab2 
+  hosts: web
+  become: true 
+  tasks:
+   - name: copy django app
+     copy:
+        src: Booster_CI_CD_Project-master
+        dest: /home/ubuntu
+
+   - name: updating apt
+     apt:
+       update_cache: yes
+
+   - name: install pip   
+     apt: 
+       name: python3-pip
+       state: present
+
+   - name: install associated variables and package
+     pip: 
+       requirements: /home/ubuntu/Booster_CI_CD_Project-master/requirements.txt
+
+   - name: dbsqlite make migrations
+     command: python3 /home/ubuntu/Booster_CI_CD_Project-master/manage.py makemigrations   
+    
+   - name: apply migrations
+     command: python3 /home/ubuntu/Booster_CI_CD_Project-master/manage.py migrate
+
+   - name: run the server
+     command: python3 /home/ubuntu/Booster_CI_CD_Project-master/manage.py runserver 0.0.0.0:8000
+     
+  handlers:
+    - name: restart-apache
+      service:
+        name: apache2
+        state: restarted
