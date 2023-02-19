@@ -1,0 +1,16 @@
+- name: verify the jump host  
+  hosts: jump-host
+  become: true
+  tasks:
+    - name: verify the jump host
+      ping:
+
+
+- name: lab2 
+  hosts: machines
+  become: true 
+  roles:
+    - postgres
+    - sonarcube
+    - nexus
+   

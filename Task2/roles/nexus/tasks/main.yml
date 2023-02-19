@@ -1,0 +1,78 @@
+---
+# tasks file for roles/nexus
+
+- name: upgrading package
+  yum:
+    name: '*'
+    state: latest
+
+- name: install wget
+  yum:
+    name: wget
+    state: latest
+
+- name: install openJDK
+  yum:
+    name: openjdk-8-jdk
+    state: latest
+    update_cache: true
+
+- name: create directory
+  file:
+    path: "/app"
+    state: directory
+
+- name: Download nexus
+  get_url:
+    url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    dest: /app/nexus.tar.gz
+
+- name: Untar the tar file
+  unarchive:
+    src: /app/nexus.tar.gz
+    dest: /app
+    remote_src: yes
+
+- name: rename unzipped file
+  command: mv /app/nexus-3.47.1-01 /app/nexus
+
+- name: add a new user called nexus
+  user:
+   name: nexus
+
+- name: change nexus directory ownership to nexus user
+  command: chown -R nexus:nexus /app/nexus
+
+- name: change nexus directory ownership to nexus user
+  command: chown -R nexus:nexus /app/sonatype-work
+
+- name: change run_as_user
+  lineinfile: 
+    dest: /app/nexus/bin/nexus.rc
+    regexp: "^#" 
+    line: run_as_user="nexus"
+    state: present
+
+- name: Copy nexus systemd unit file created in files 
+  copy: 
+    src: nexus.service
+    dest: /etc/systemd/system/
+
+- name: Execute a command to add nexus service to boot
+  service:
+   name: "nexus"
+   enabled: yes
+  
+
+- name: restart nexus
+  service: 
+    name: nexus
+    state: restarted
+
+
+
+
+
+
+ 
+ 

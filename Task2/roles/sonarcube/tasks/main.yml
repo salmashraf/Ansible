@@ -1,0 +1,104 @@
+---
+# tasks file for roles/sonarcube
+- name: install zip
+  apt:
+    name: 
+    - zip
+    - unzip
+    state: present
+    update_cache: true
+
+- name: Download latest version of sonarcube zip
+  get_url:
+    url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.0.65466.zip"
+    dest: ./sonarqube
+
+- name: listing files
+  shell: cd .
+
+- name: listing files
+  shell: ls 
+  register: listing_files
+
+- debug:
+    var: listing_files.stdout_lines
+
+# - name: unzip downloaded file
+#- copy:
+ #  src: ./sonarqube
+  # dest: .
+
+#- name: rename zip file
+ # shell: cd .
+#
+#- name: rename zip file
+ # shell: mv ./sonarqube ./sonarqube.gz  
+
+#- name: rename zip file
+ # shell: cd .
+
+#- name: rename zip file
+ # shell: mv ./sonarqube.gz ./sonarqube
+
+# - shell: gunzip ./sonarqube
+- name: extract sonarqube
+  unarchive:
+   remote_src: true
+   src: ./sonarqube
+   dest: .
+ 
+  
+ 
+- name: Move the unzipped files to /opt/sonarqube directory
+  shell: "mv sonarqube-9.9.0.65466 /opt/sonarqube"
+
+- name: Add SonarQube Group and User
+  user:
+   name: sonar
+   group: sonar
+
+- name: Grant the sonar user access to the /opt/sonarqube directory
+  command: chown -R sonar:sonar /opt/sonarqube
+
+- name: Edit usernsme in the SonarQube configuration file
+  ini_file: dest=/opt/sonarqube/conf/sonar.properties section=DEFAULT option=sonar.jdbc.username value=sonar backup=yes
+  tags: configuration
+
+- name: Edit password in the SonarQube configuration file
+  ini_file: dest=/opt/sonarqube/conf/sonar.properties section=DEFAULT option=sonar.jdbc.password value=my_strong_password backup=yes
+  tags: configuration
+
+- name: Edit the sonar script file
+  lineinfile:
+   path: /opt/sonarqube/bin/linux-x86-64/sonar.sh
+   insertafter: "^[50]+" 
+   line: "#RUN_AS_USER="
+   state: present  
+
+- name: uncomment a line in the sonar script file
+  replace:
+    path: /opt/sonarqube/bin/linux-x86-64/sonar.sh
+    regexp: '#RUN_AS_USER='
+    replace: 'RUN_AS_USER=sonar'
+
+- name: Create a systemd service file to start SonarQube at system boot
+  copy:
+    src: ./sonar.service
+    dest: /etc/systemd/system/
+  register: sonar_service
+
+- name: restart service
+  service:
+    name: sonar
+    state: restarted
+  when: sonar_service.changed
+
+- name: Create a systemd service file to start SonarQube at system boot
+  copy:
+   src: ./sysctl.conf
+   dest: /etc/sysctl.conf
+  register: sysctl_conf
+
+- name: reboot the machine
+  reboot:
+      
